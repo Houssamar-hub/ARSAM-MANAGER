@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+
 const getPublicUser = (user) => ({
   id: user._id,
   name: user.name,
@@ -114,6 +115,30 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login failed:", error.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+export const getme = async (req, res) => {
+ try {
+    const user = await User.findById(req.user.id).select(
+      "-password"
+    );
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ 
+      user:{
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt
+      } 
+    });
+  }
+  catch (error) {
+    console.error("Get user failed:", error.message);
     return res.status(500).json({ message: "Server error" });
   }
 };
