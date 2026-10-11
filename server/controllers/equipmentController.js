@@ -100,3 +100,45 @@ export const createEquipment = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const getEquipments = async (req, res) => {
+  try {
+    const { search, category, condition, status, chantier } = req.query;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (condition) filter.condition = condition;
+    if (status) filter.status = status;
+
+    if (chantier) {
+      if (!mongoose.isValidObjectId(chantier)) {
+        return res.status(400).json({ message: "Invalid chantier ID" });
+      }
+
+      filter.chantier = chantier;
+    }
+
+    const equipments = await Equipment.find(filter)
+      .populate("chantier", "name location status")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    const results = search
+      ? equipments.filter((item) => {
+          const term = search.toLowerCase();
+
+          return (
+            item.name.toLowerCase().includes(term) ||
+            item.reference.toLowerCase().includes(term)
+          );
+        })
+      : equipments;
+
+    return res.status(200).json({
+      count: results.length,
+      equipments: results
+    });
+  } catch (error) {
+    console.error("Get equipments failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
