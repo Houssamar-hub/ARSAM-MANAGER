@@ -66,3 +66,37 @@ export const createEquipment = async (req, res) => {
         message: "Equipment reference already exists"
       });
     }
+     const equipment = await Equipment.create({
+      name,
+      reference,
+      category,
+      description,
+      quantity,
+      condition,
+      status,
+      chantier: chantier || null,
+      purchaseDate: purchaseDate || null,
+      purchasePrice: purchasePrice ?? 0,
+      createdBy: req.user.id
+    });
+
+    return res.status(201).json({
+      message: "Equipment created successfully",
+      equipment
+    });
+  } catch (error) {
+    console.error("Create equipment failed:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Equipment reference already exists"
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
