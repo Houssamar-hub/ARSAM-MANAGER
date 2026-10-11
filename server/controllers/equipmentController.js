@@ -142,3 +142,23 @@ export const getEquipments = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const getEquipmentById = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid equipment ID" });
+    }
+
+    const equipment = await Equipment.findById(req.params.id)
+      .populate("chantier", "name location status")
+      .populate("createdBy", "name email");
+
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    return res.status(200).json({ equipment });
+  } catch (error) {
+    console.error("Get equipment failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
