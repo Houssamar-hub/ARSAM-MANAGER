@@ -162,3 +162,135 @@ export const getEquipmentById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const updateEquipment = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid equipment ID" });
+    }
+
+    const allowedFields = [
+      "name",
+      "category",
+      "description",
+      "quantity",
+      "condition",
+      "status",
+      "chantier",
+      "purchaseDate",
+      "purchasePrice"
+    ];
+
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
+    if (
+      updates.quantity !== undefined &&
+      (!Number.isInteger(updates.quantity) || updates.quantity < 0)
+    ) {
+      return res.status(400).json({ message: "Invalid quantity" });
+    }
+
+    if (
+      updates.purchasePrice !== undefined &&
+      (!Number.isFinite(updates.purchasePrice) || updates.purchasePrice < 0)
+    ) {
+      return res.status(400).json({ message: "Invalid purchase price" });
+    }
+
+    if (updates.category !== undefined &&
+        !["machinery", "vehicle", "tool", "safety", "other"].includes(updates.category)) {
+      return res.status(400).json({ message: "Invalid category" });
+    }
+
+    if (updates.condition !== undefined &&
+        !["new", "good", "damaged", "maintenance"].includes(updates.condition)) {
+      return res.status(400).json({ message: "Invalid condition" });
+    }
+
+    if (updates.status !== undefined &&
+        !["available", "assigned", "unavailable"].includes(updates.status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    if (updates.purchaseDate === "") {
+      updates.purchaseDate = null;
+    } else if (
+      updates.purchaseDate !== undefined &&
+      updates.purchaseDate !== null &&
+      Number.isNaN(Date.parse(updates.purchaseDate))
+    ) {
+      return res.status(400).json({ message: "Invalid purchase date" });
+    }
+
+    if (updates.chantier) {
+      if (!mongoose.isValidObjectId(updates.chantier)) {
+        return res.status(400).json({ message: "Invalid chantier ID" });
+      }
+const existingChantier = await Chantier.findById(updates.chantier);
+
+      if (!existingChantier) {
+        return res.status(404).json({ message: "Chantier not found" });
+      }
+    } else if (updates.chantier === "") {
+      updates.chantier = null;
+    }
+ const equipment = await Equipment.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .populate("chantier", "name location status")
+      .populate("createdBy", "name email");
+
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    return res.status(200).json({
+      message: "Equipment updated successfully",
+      equipment
+    });
+  } catch (error) {
+    console.error("Update equipment failed:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Equipment reference already exists" });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteEquipment = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid equipment ID" });
+    }
+
+    const equipment = await Equipment.findByIdAndDelete(req.params.id);
+
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    return res.status(200).json({
+      message: "Equipment deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete equipment failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
