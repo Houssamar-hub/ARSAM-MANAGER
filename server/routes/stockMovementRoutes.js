@@ -17,6 +17,7 @@ router.route("/")
   .get(authorize("admin", "manager"), getStockMovements)
   .post(authorize("admin", "manager"), createStockMovement);
 
-router.get("/:id", authorize("admin", "manager"), getStockMovementById);
+router.route("/:id")
+  .get(authorize("admin", "manager"), getStockMovementById);
 
 export default router;
