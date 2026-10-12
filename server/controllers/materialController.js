@@ -140,3 +140,23 @@ export const getMaterials = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const getMaterialById = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid material ID" });
+    }
+
+    const material = await Material.findById(req.params.id)
+      .populate("chantier", "name location status")
+      .populate("createdBy", "name email");
+
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    return res.status(200).json({ material });
+  } catch (error) {
+    console.error("Get material failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
