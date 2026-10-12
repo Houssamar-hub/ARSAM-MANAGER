@@ -95,3 +95,48 @@ export const createMaterial = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const getMaterials = async (req, res) => {
+  try {
+    const { search, category, chantier, lowStock } = req.query;
+    const filter = {};
+
+    if (category) {
+      if (!categories.includes(category)) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+      filter.category = category;
+    }
+
+    if (chantier) {
+      if (!mongoose.isValidObjectId(chantier)) {
+        return res.status(400).json({ message: "Invalid chantier ID" });
+      }
+      filter.chantier = chantier;
+    }
+
+    if (lowStock === "true") {
+      filter.$expr = { $lte: ["$quantity", "$minStock"] };
+    }
+
+    let materials = await Material.find(filter)
+      .populate("chantier", "name location status")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    if (search) {
+      const term = search.toLowerCase();
+      materials = materials.filter((item) =>
+        item.name.toLowerCase().includes(term) ||
+        item.reference.toLowerCase().includes(term)
+      );
+    }
+
+    return res.status(200).json({
+      count: materials.length,
+      materials
+    });
+  } catch (error) {
+    console.error("Get materials failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
