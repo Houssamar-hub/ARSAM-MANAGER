@@ -246,3 +246,32 @@ export const updateMaterial = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const deleteMaterial = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid material ID" });
+    }
+
+    const material = await Material.findById(req.params.id);
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    const movementExists = await StockMovement.exists({
+      material: material._id
+    });
+
+    if (movementExists) {
+      return res.status(409).json({
+        message: "Cannot delete material with stock history"
+      });
+    }
+
+    await material.deleteOne();
+
+    return res.status(200).json({ message: "Material deleted successfully" });
+  } catch (error) {
+    console.error("Delete material failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
