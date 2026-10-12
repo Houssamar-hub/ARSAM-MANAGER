@@ -160,3 +160,89 @@ export const getMaterialById = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const updateMaterial = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid material ID" });
+    }
+
+    const allowed = [
+      "name", "category", "unit", "minStock",
+      "unitPrice", "storageLocation", "chantier"
+    ];
+
+    const updates = {};
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+
+    if (req.body.quantity !== undefined) {
+      return res.status(400).json({
+        message: "Use stock movements to change material quantity"
+      });
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
+    if (updates.category && !categories.includes(updates.category)) {
+      return res.status(400).json({ message: "Invalid category" });
+    }
+
+    if (updates.unit && !units.includes(updates.unit)) {
+      return res.status(400).json({ message: "Invalid unit" });
+    }
+
+    if (
+      updates.minStock !== undefined &&
+      (!Number.isFinite(updates.minStock) || updates.minStock < 0)
+    ) {
+      return res.status(400).json({ message: "Invalid minimum stock" });
+    }
+
+    if (
+      updates.unitPrice !== undefined &&
+      (!Number.isFinite(updates.unitPrice) || updates.unitPrice < 0)
+    ) {
+      return res.status(400).json({ message: "Invalid unit price" });
+    }
+
+    if (updates.chantier) {
+      if (!mongoose.isValidObjectId(updates.chantier)) {
+        return res.status(400).json({ message: "Invalid chantier ID" });
+      }
+
+      const exists = await Chantier.findById(updates.chantier);
+      if (!exists) {
+        return res.status(404).json({ message: "Chantier not found" });
+      }
+    } else if (updates.chantier === "") {
+      updates.chantier = null;
+    }
+
+    const material = await Material.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .populate("chantier", "name location status");
+
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    return res.status(200).json({
+      message: "Material updated successfully",
+      material
+    });
+  } catch (error) {
+    console.error("Update material failed:", error);
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
