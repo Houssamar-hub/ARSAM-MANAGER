@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import chantierRoutes from "./routes/chantierRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import equipmentRoutes from "./routes/equipmentRoutes.js";const app = express();
+import materialRoutes from "./routes/materialRoutes.js";
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +23,7 @@ app.get("/api/users/me", protect, getme);
 app.use("/api/chantiers", chantierRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/equipments", equipmentRoutes);
+app.use("/api/materials", materialRoutes);
 app.use((error, req, res, next) => {
   if (error.type === "entity.parse.failed") {
     return res.status(400).json({ message: "Request body must be valid JSON" });
