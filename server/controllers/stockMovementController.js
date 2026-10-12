@@ -176,3 +176,24 @@ export const getStockMovements = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+export const getStockMovementById = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid movement ID" });
+    }
+
+    const movement = await StockMovement.findById(req.params.id)
+      .populate("material", "name reference unit")
+      .populate("chantier", "name location")
+      .populate("createdBy", "name email");
+
+    if (!movement) {
+      return res.status(404).json({ message: "Stock movement not found" });
+    }
+
+    return res.status(200).json({ movement });
+  } catch (error) {
+    console.error("Get stock movement failed:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
