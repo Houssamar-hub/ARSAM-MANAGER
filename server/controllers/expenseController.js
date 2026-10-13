@@ -116,3 +116,95 @@ export const createExpense = async (req, res, next) => {
     next(error);
   }
 };
+export const updateExpense = async (req, res, next) => {
+  try {
+    const allowedFields = [
+      "chantier",
+      "title",
+      "description",
+      "category",
+      "amount",
+      "expenseDate",
+      "paymentMethod",
+      "receipt",
+    ];
+
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        message: "No valid fields provided",
+      });
+    }
+
+    if (updates.amount !== undefined) {
+      updates.amount = Number(updates.amount);
+
+      if (!Number.isFinite(updates.amount) || updates.amount <= 0) {
+        return res.status(400).json({
+          message: "Amount must be greater than zero",
+        });
+      }
+    }
+
+    if (updates.title !== undefined && !updates.title.trim()) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    if (
+      updates.expenseDate !== undefined &&
+      Number.isNaN(Date.parse(updates.expenseDate))
+    ) {
+      return res.status(400).json({ message: "Invalid expense date" });
+    }
+
+    if (updates.chantier) {
+      const chantierExists = await Chantier.findById(updates.chantier);
+
+      if (!chantierExists) {
+        return res.status(404).json({ message: "Chantier not found" });
+      }
+    }
+
+    const expense = await Expense.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .populate("chantier", "name location")
+      .populate("createdBy", "name email");
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    res.status(200).json({
+      message: "Expense updated successfully",
+      expense,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteExpense = async (req, res, next) => {
+  try {
+    const expense = await Expense.findByIdAndDelete(req.params.id);
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    res.status(200).json({
+      message: "Expense deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
