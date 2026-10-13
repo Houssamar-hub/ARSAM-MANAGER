@@ -37,3 +37,19 @@ export const getExpenses = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getExpenseById = async (req, res, next) => {
+  try {
+    const expense = await Expense.findById(req.params.id)
+      .populate("chantier", "name location")
+      .populate("createdBy", "name email");
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    res.status(200).json({ expense });
+  } catch (error) {
+    next(error);
+  }
+};
