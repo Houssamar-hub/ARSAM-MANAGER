@@ -53,3 +53,66 @@ export const getExpenseById = async (req, res, next) => {
     next(error);
   }
 };
+export const createExpense = async (req, res, next) => {
+  try {
+    const {
+      chantier,
+      title,
+      description,
+      category,
+      amount,
+      expenseDate,
+      paymentMethod,
+      receipt,
+    } = req.body;
+
+    if (!chantier || !title?.trim() || amount === undefined) {
+      return res.status(400).json({
+        message: "Chantier, title and amount are required",
+      });
+    }
+
+    const parsedAmount = Number(amount);
+
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({
+        message: "Amount must be greater than zero",
+      });
+    }
+
+    if (expenseDate && Number.isNaN(Date.parse(expenseDate))) {
+      return res.status(400).json({
+        message: "Invalid expense date",
+      });
+    }
+
+    const chantierExists = await Chantier.findById(chantier);
+
+    if (!chantierExists) {
+      return res.status(404).json({ message: "Chantier not found" });
+    }
+
+    const expense = await Expense.create({
+      chantier,
+      title,
+      description,
+      category,
+      amount: parsedAmount,
+      expenseDate,
+      paymentMethod,
+      receipt,
+      createdBy: req.user.id,
+    });
+
+    const populatedExpense = await Expense.findById(expense._id)
+      .populate("chantier", "name location")
+      .populate("createdBy", "name email");
+
+    res.status(201).json({
+      message: "Expense created successfully",
+      expense: populatedExpense,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
