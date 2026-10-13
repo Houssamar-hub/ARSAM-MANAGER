@@ -8,6 +8,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
 import materialRoutes from "./routes/materialRoutes.js";
 import stockMovementRoutes from "./routes/stockMovementRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/equipments", equipmentRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 app.use((error, req, res, next) => {
   if (error.type === "entity.parse.failed") {
