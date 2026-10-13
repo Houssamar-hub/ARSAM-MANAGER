@@ -53,6 +53,7 @@ export const getExpenseById = async (req, res, next) => {
     next(error);
   }
 };
+
 export const createExpense = async (req, res, next) => {
   try {
     const {
@@ -116,6 +117,7 @@ export const createExpense = async (req, res, next) => {
     next(error);
   }
 };
+
 export const updateExpense = async (req, res, next) => {
   try {
     const allowedFields = [
@@ -203,6 +205,52 @@ export const deleteExpense = async (req, res, next) => {
 
     res.status(200).json({
       message: "Expense deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getChantierExpenseSummary = async (req, res, next) => {
+  try {
+    const chantier = await Chantier.findById(req.params.chantierId);
+
+    if (!chantier) {
+      return res.status(404).json({ message: "Chantier not found" });
+    }
+
+    const result = await Expense.aggregate([
+      {
+        $match: {
+          chantier: chantier._id,
+        },
+      },
+      {
+        $group: {
+          _id: "$category",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalExpenses = result.reduce(
+      (total, item) => total + item.total,
+      0
+    );
+
+    res.status(200).json({
+      chantier: {
+        id: chantier._id,
+        name: chantier.name,
+        budget: chantier.budget,
+      },
+      totalExpenses,
+      remainingBudget:
+        typeof chantier.budget === "number"
+          ? chantier.budget - totalExpenses
+          : null,
+      categories: result,
     });
   } catch (error) {
     next(error);
