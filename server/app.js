@@ -27,7 +27,6 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/equipments", equipmentRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
-
 app.use("/api/expenses", expenseRoutes);
 
 app.use((error, req, res, next) => {
