@@ -64,3 +64,126 @@ export const getAttendanceById = async (req, res, next) => {
     next(error);
   }
 };
+export const createAttendance = async (req, res, next) => {
+  try {
+    const {
+      employee,
+      chantier,
+      date,
+      status,
+      checkIn,
+      checkOut,
+      notes,
+    } = req.body;
+
+    if (!employee || !date) {
+      return res.status(400).json({
+        message: "Employee and date are required",
+      });
+    }
+
+    if (Number.isNaN(Date.parse(date))) {
+      return res.status(400).json({
+        message: "Invalid attendance date",
+      });
+    }
+
+    const attendanceDate = new Date(date);
+
+    if (attendanceDate > new Date()) {
+      return res.status(400).json({
+        message: "Attendance date cannot be in the future",
+      });
+    }
+
+    const employeeExists = await Employee.findById(employee);
+
+    if (!employeeExists) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    if (chantier) {
+      const chantierExists = await Chantier.findById(chantier);
+
+      if (!chantierExists) {
+        return res.status(404).json({
+          message: "Chantier not found",
+        });
+      }
+    }
+
+    if (
+      status !== undefined &&
+      !["present", "absent", "late", "on_leave"].includes(status)
+    ) {
+      return res.status(400).json({
+        message: "Invalid attendance status",
+      });
+    }
+
+    const parsedCheckIn = checkIn ? new Date(checkIn) : null;
+    const parsedCheckOut = checkOut ? new Date(checkOut) : null;
+
+    if (
+      (checkIn && Number.isNaN(parsedCheckIn.getTime())) ||
+      (checkOut && Number.isNaN(parsedCheckOut.getTime()))
+    ) {
+      return res.status(400).json({
+        message: "Invalid check-in or check-out time",
+      });
+    }
+
+    if (
+      parsedCheckIn &&
+      parsedCheckOut &&
+      parsedCheckOut < parsedCheckIn
+    ) {
+      return res.status(400).json({
+        message: "Check-out must be after check-in",
+      });
+    }
+
+    const startOfDay = new Date(attendanceDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(attendanceDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const existing = await Attendance.findOne({
+      employee,
+      date: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        message: "Attendance already exists for this employee and date",
+      });
+    }
+
+    const attendance = await Attendance.create({
+      employee,
+      chantier: chantier || null,
+      date: attendanceDate,
+      status,
+      checkIn: parsedCheckIn,
+      checkOut: parsedCheckOut,
+      notes,
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({
+      message: "Attendance created successfully",
+      attendance,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Attendance already exists for this employee and date",
+      });
+    }
+
+    next(error);
+  }
+};
