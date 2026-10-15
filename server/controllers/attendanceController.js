@@ -353,3 +353,44 @@ export const deleteAttendance = async (req, res, next) => {
     next(error);
   }
 };
+export const getAttendanceSummary = async (req, res, next) => {
+  try {
+    const { startDate, endDate, chantier } = req.query;
+    const match = {};
+
+    if (chantier) match.chantier = new mongoose.Types.ObjectId(chantier);
+
+    if (startDate || endDate) {
+      match.date = {};
+
+      if (startDate) match.date.$gte = new Date(startDate);
+
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+        match.date.$lte = end;
+      }
+    }
+
+    const summary = await Attendance.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$status",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      summary: {
+        present: summary.find((item) => item._id === "present")?.total || 0,
+        absent: summary.find((item) => item._id === "absent")?.total || 0,
+        late: summary.find((item) => item._id === "late")?.total || 0,
+        on_leave: summary.find((item) => item._id === "on_leave")?.total || 0,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
