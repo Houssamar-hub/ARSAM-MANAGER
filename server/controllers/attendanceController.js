@@ -43,3 +43,24 @@ export const getAttendances = async (req, res, next) => {
   }
 };
 
+export const getAttendanceById = async (req, res, next) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id)
+      .populate({
+        path: "employee",
+        populate: { path: "user", select: "name email" },
+      })
+      .populate("chantier", "name location")
+      .populate("createdBy", "name email");
+
+    if (!attendance) {
+      return res.status(404).json({
+        message: "Attendance not found",
+      });
+    }
+
+    res.status(200).json({ attendance });
+  } catch (error) {
+    next(error);
+  }
+};
