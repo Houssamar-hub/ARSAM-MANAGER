@@ -336,3 +336,20 @@ export const updateAttendance = async (req, res, next) => {
     next(error);
   }
 };
+export const deleteAttendance = async (req, res, next) => {
+  try {
+    const attendance = await Attendance.findByIdAndDelete(req.params.id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        message: "Attendance not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Attendance deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
