@@ -9,7 +9,7 @@ import equipmentRoutes from "./routes/equipmentRoutes.js";
 import materialRoutes from "./routes/materialRoutes.js";
 import stockMovementRoutes from "./routes/stockMovementRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
-
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 const app = express();
 
 app.use(cors());
