@@ -187,3 +187,152 @@ export const createAttendance = async (req, res, next) => {
     next(error);
   }
 };
+export const updateAttendance = async (req, res, next) => {
+  try {
+    const allowedFields = [
+      "employee",
+      "chantier",
+      "date",
+      "status",
+      "checkIn",
+      "checkOut",
+      "notes",
+    ];
+
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        message: "No valid fields provided",
+      });
+    }
+
+    if (updates.employee) {
+      const employeeExists = await Employee.findById(updates.employee);
+
+      if (!employeeExists) {
+        return res.status(404).json({
+          message: "Employee not found",
+        });
+      }
+    }
+
+    if (updates.chantier) {
+      const chantierExists = await Chantier.findById(updates.chantier);
+
+      if (!chantierExists) {
+        return res.status(404).json({
+          message: "Chantier not found",
+        });
+      }
+    }
+
+    if (updates.date !== undefined) {
+      if (Number.isNaN(Date.parse(updates.date))) {
+        return res.status(400).json({
+          message: "Invalid attendance date",
+        });
+      }
+
+      updates.date = new Date(updates.date);
+    }
+
+    if (
+      updates.status !== undefined &&
+      !["present", "absent", "late", "on_leave"].includes(updates.status)
+    ) {
+      return res.status(400).json({
+        message: "Invalid attendance status",
+      });
+    }
+
+    for (const field of ["checkIn", "checkOut"]) {
+      if (updates[field] === null || updates[field] === "") {
+        updates[field] = null;
+      } else if (updates[field] !== undefined) {
+        const parsed = new Date(updates[field]);
+
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({
+            message: `Invalid ${field} time`,
+          });
+        }
+
+        updates[field] = parsed;
+      }
+    }
+
+    const current = await Attendance.findById(req.params.id);
+
+    if (!current) {
+      return res.status(404).json({
+        message: "Attendance not found",
+      });
+    }
+
+    const employeeId = updates.employee || current.employee;
+    const attendanceDate = updates.date || current.date;
+
+    const startOfDay = new Date(attendanceDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(attendanceDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const duplicate = await Attendance.findOne({
+      employee: employeeId,
+      date: { $gte: startOfDay, $lte: endOfDay },
+      _id: { $ne: current._id },
+    });
+
+    if (duplicate) {
+      return res.status(409).json({
+        message: "Attendance already exists for this employee and date",
+      });
+    }
+
+    const checkIn = updates.checkIn !== undefined
+      ? updates.checkIn
+      : current.checkIn;
+
+    const checkOut = updates.checkOut !== undefined
+      ? updates.checkOut
+      : current.checkOut;
+
+    if (checkIn && checkOut && checkOut < checkIn) {
+      return res.status(400).json({
+        message: "Check-out must be after check-in",
+      });
+    }
+
+    const attendance = await Attendance.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .populate({
+        path: "employee",
+        populate: { path: "user", select: "name email" },
+      })
+      .populate("chantier", "name location");
+
+    res.status(200).json({
+      message: "Attendance updated successfully",
+      attendance,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Attendance already exists for this employee and date",
+      });
+    }
+
+    next(error);
+  }
+};
