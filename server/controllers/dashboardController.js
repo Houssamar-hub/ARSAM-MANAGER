@@ -1,3 +1,4 @@
+
 import Chantier from "../models/Chantier.js";
 import Employee from "../models/Employee.js";
 import Equipment from "../models/Equipment.js";
@@ -21,7 +22,8 @@ export const getDashboardStats = async (req, res, next) => {
       now.getMonth(),
       1
     );
- const [
+
+    const [
       totalChantiers,
       plannedChantiers,
       activeChantiers,
@@ -61,7 +63,8 @@ export const getDashboardStats = async (req, res, next) => {
       Material.countDocuments({
         $expr: { $lte: ["$quantity", "$minStock"] },
       }),
- Material.aggregate([
+
+      Material.aggregate([
         {
           $group: {
             _id: null,
@@ -124,3 +127,63 @@ export const getDashboardStats = async (req, res, next) => {
         .limit(5)
         .select("name location status budget startDate endDate"),
     ]);
+
+    const attendanceStats = {
+      present: 0,
+      absent: 0,
+      late: 0,
+      on_leave: 0,
+    };
+
+    for (const item of todayAttendance) {
+      attendanceStats[item._id] = item.total;
+    }
+
+    res.status(200).json({
+      success: true,
+      dashboard: {
+        chantiers: {
+          total: totalChantiers,
+          planned: plannedChantiers,
+          inProgress: activeChantiers,
+          completed: completedChantiers,
+        },
+
+        employees: {
+          total: totalEmployees,
+          active: activeEmployees,
+          inactive: totalEmployees - activeEmployees,
+        },
+
+        equipments: {
+          total: totalEquipments,
+          available: availableEquipments,
+          unavailable: totalEquipments - availableEquipments,
+        },
+
+        materials: {
+          total: totalMaterials,
+          lowStock: lowStockMaterials,
+          stockValue: stockValue[0]?.total || 0,
+        },
+
+        expenses: {
+          total: totalExpenses[0]?.total || 0,
+          thisMonth: monthlyExpenses[0]?.total || 0,
+        },
+
+        attendance: attendanceStats,
+
+        stockMovements: {
+          totalEntries: totalStockEntries,
+          totalExits: totalStockExits,
+        },
+
+        recentChantiers,
+        generatedAt: now,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
