@@ -21,3 +21,43 @@ export const getDashboardStats = async (req, res, next) => {
       now.getMonth(),
       1
     );
+ const [
+      totalChantiers,
+      plannedChantiers,
+      activeChantiers,
+      completedChantiers,
+      totalEmployees,
+      activeEmployees,
+      totalEquipments,
+      availableEquipments,
+      totalMaterials,
+      lowStockMaterials,
+      stockValue,
+      totalExpenses,
+      monthlyExpenses,
+      todayAttendance,
+      totalStockEntries,
+      totalStockExits,
+      recentChantiers,
+    ] = await Promise.all([
+      Chantier.countDocuments(),
+
+      Chantier.countDocuments({ status: "planned" }),
+
+      Chantier.countDocuments({ status: "in_progress" }),
+
+      Chantier.countDocuments({ status: "completed" }),
+
+      Employee.countDocuments(),
+
+      Employee.countDocuments({ status: "active" }),
+
+      Equipment.countDocuments(),
+
+      Equipment.countDocuments({ status: "available" }),
+
+      Material.countDocuments(),
+
+      Material.countDocuments({
+        $expr: { $lte: ["$quantity", "$minStock"] },
+      }),
