@@ -113,7 +113,6 @@ export const getDashboardStats = async (req, res, next) => {
           },
         },
       ]),
-
       StockMovement.countDocuments({
         type: "in",
       }),
