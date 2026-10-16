@@ -61,3 +61,66 @@ export const getDashboardStats = async (req, res, next) => {
       Material.countDocuments({
         $expr: { $lte: ["$quantity", "$minStock"] },
       }),
+ Material.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: {
+                $multiply: ["$quantity", "$unitPrice"],
+              },
+            },
+          },
+        },
+      ]),
+
+      Expense.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      Expense.aggregate([
+        {
+          $match: {
+            expenseDate: { $gte: startOfMonth, $lte: now },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      Attendance.aggregate([
+        {
+          $match: {
+            date: { $gte: startOfDay, $lte: endOfDay },
+          },
+        },
+        {
+          $group: {
+            _id: "$status",
+            total: { $sum: 1 },
+          },
+        },
+      ]),
+
+      StockMovement.countDocuments({
+        type: "in",
+      }),
+
+      StockMovement.countDocuments({
+        type: "out",
+      }),
+
+      Chantier.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select("name location status budget startDate endDate"),
+    ]);
