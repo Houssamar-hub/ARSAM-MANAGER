@@ -99,7 +99,6 @@ export const getDashboardStats = async (req, res, next) => {
           },
         },
       ]),
-
       Attendance.aggregate([
         {
           $match: {
