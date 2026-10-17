@@ -31,6 +31,7 @@ app.use("/api/materials", materialRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/attendances", attendanceRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use((error, req, res, next) => {
   if (error.type === "entity.parse.failed") {
