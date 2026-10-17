@@ -10,6 +10,7 @@ import materialRoutes from "./routes/materialRoutes.js";
 import stockMovementRoutes from "./routes/stockMovementRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 const app = express();
 
 app.use(cors());
