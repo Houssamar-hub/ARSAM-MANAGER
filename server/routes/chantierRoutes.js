@@ -6,7 +6,7 @@ import {
   getChantiers,
   getChantierById,
   updateChantier,
-  deleteChantier
+  deleteChantier,
 } from "../controllers/chantierController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -17,13 +17,23 @@ const router = express.Router();
 
 router.use(protect);
 
-router.route("/")
+router
+  .route("/")
   .get(getChantiers)
   .post(authorize("admin", "manager"), createChantier);
 
-router.route("/:id")
-  .get(getChantierById)
-  .put(authorize("admin", "manager"), updateChantier)
-  .delete(authorize("admin"), deleteChantier);
+router
+  .route("/:id")
+  .get(validateObjectId("id"), getChantierById)
+  .put(
+    authorize("admin", "manager"),
+    validateObjectId("id"),
+    updateChantier
+  )
+  .delete(
+    authorize("admin"),
+    validateObjectId("id"),
+    deleteChantier
+  );
 
 export default router;
