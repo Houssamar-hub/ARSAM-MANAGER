@@ -22,5 +22,22 @@ router
   .get(authorize("admin", "manager"), getMaterials)
   .post(authorize("admin", "manager"), createMaterial);
 
+router
+  .route("/:id")
+  .get(
+    authorize("admin", "manager"),
+    validateObjectId("id"),
+    getMaterialById
+  )
+  .put(
+    authorize("admin", "manager"),
+    validateObjectId("id"),
+    updateMaterial
+  )
+  .delete(
+    authorize("admin"),
+    validateObjectId("id"),
+    deleteMaterial
+  );
 
 export default router;
