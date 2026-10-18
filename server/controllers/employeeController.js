@@ -4,81 +4,157 @@ import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import Chantier from "../models/Chantier.js";
 
+const EMPLOYEE_STATUSES = ["active", "inactive", "on_leave"];
+
+const isValidDate = (value) => {
+  if (
+    !(typeof value === "string" || value instanceof Date) ||
+    value === ""
+  ) {
+    return false;
+  }
+
+  return !Number.isNaN(new Date(value).getTime());
+};
+
+const parseSalary = (value) => {
+  if (
+    value === "" ||
+    value === null ||
+    value === undefined ||
+    (typeof value !== "number" && typeof value !== "string")
+  ) {
+    return null;
+  }
+
+  const salary = Number(value);
+
+  return Number.isFinite(salary) && salary >= 0 ? salary : null;
+};
+
+const handleError = (res, error, operation) => {
+  if (error.name === "ValidationError" || error.name === "CastError") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid data provided",
+    });
+  }
+
+  if (error.code === 11000) {
+    return res.status(409).json({
+      success: false,
+      message: "This employee profile already exists",
+    });
+  }
+
+  console.error(`${operation} failed:`, error.message);
+
+  return res.status(500).json({
+    success: false,
+    message: "Server error",
+  });
+};
+
+const populateEmployee = (query) =>
+  query
+    .populate("user", "name email role status")
+    .populate("chantier", "name location status");
+
 export const createEmployee = async (req, res) => {
   try {
-    const { user, phone, jobTitle, salary, hireDate, chantier } = req.body;
+    const { user, phone, jobTitle, salary, hireDate, chantier } =
+      req.body || {};
 
-    if (!user || !jobTitle || salary === undefined || !hireDate) {
+    if (
+      typeof user !== "string" ||
+      !mongoose.isValidObjectId(user) ||
+      typeof jobTitle !== "string" ||
+      !jobTitle.trim() ||
+      salary === undefined ||
+      !isValidDate(hireDate)
+    ) {
       return res.status(400).json({
-        message: "User, jobTitle, salary and hireDate are required"
+        success: false,
+        message: "Valid user, job title, salary and hire date are required",
       });
     }
 
-    if (!mongoose.isValidObjectId(user)) {
-      return res.status(400).json({ message: "Invalid user ID" });
+    const parsedSalary = parseSalary(salary);
+
+    if (parsedSalary === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Salary must be a valid non-negative number",
+      });
     }
 
-    if (!Number.isFinite(salary) || salary < 0) {
-      return res.status(400).json({ message: "Salary must be a valid positive number" });
+    if (
+      phone !== undefined &&
+      phone !== null &&
+      typeof phone !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone must be a string",
+      });
     }
 
-    if (Number.isNaN(Date.parse(hireDate))) {
-      return res.status(400).json({ message: "Invalid hire date" });
+    if (chantier && !mongoose.isValidObjectId(chantier)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid chantier ID",
+      });
     }
 
     const existingUser = await User.findById(user);
 
     if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     const existingEmployee = await Employee.findOne({ user });
 
     if (existingEmployee) {
       return res.status(409).json({
-        message: "This user already has an employee profile"
+        success: false,
+        message: "This user already has an employee profile",
       });
     }
 
     if (chantier) {
-      if (!mongoose.isValidObjectId(chantier)) {
-        return res.status(400).json({ message: "Invalid chantier ID" });
-      }
-
       const existingChantier = await Chantier.findById(chantier);
 
       if (!existingChantier) {
-        return res.status(404).json({ message: "Chantier not found" });
+        return res.status(404).json({
+          success: false,
+          message: "Chantier not found",
+        });
       }
     }
 
     const employee = await Employee.create({
       user,
-      phone,
-      jobTitle,
-      salary,
-      hireDate,
-      chantier: chantier || null
+      phone: typeof phone === "string" ? phone.trim() : phone,
+      jobTitle: jobTitle.trim(),
+      salary: parsedSalary,
+      hireDate: new Date(hireDate),
+      chantier: chantier || null,
     });
 
-    const result = await Employee.findById(employee._id)
-      .populate("user", "name email role status")
-      .populate("chantier", "name location status");
+    const result = await populateEmployee(
+      Employee.findById(employee._id)
+    );
 
     return res.status(201).json({
+      success: true,
       message: "Employee created successfully",
-      employee: result
+      employee: result,
     });
   } catch (error) {
-    console.error("Create employee failed:", error);
-
-    if (error.code === 11000) {
-      return res.status(409).json({
-        message: "An employee profile already exists for this user"
-      });
-    }
-
-    return res.status(500).json({ message: "Server error" });
+    return handleError(res, error, "Create employee");
   }
 };
 
@@ -88,8 +164,11 @@ export const getEmployees = async (req, res) => {
     const filter = {};
 
     if (status) {
-      if (!["active", "inactive", "on_leave"].includes(status)) {
-        return res.status(400).json({ message: "Invalid employee status" });
+      if (!EMPLOYEE_STATUSES.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid employee status",
+        });
       }
 
       filter.status = status;
@@ -97,26 +176,27 @@ export const getEmployees = async (req, res) => {
 
     if (chantier) {
       if (!mongoose.isValidObjectId(chantier)) {
-        return res.status(400).json({ message: "Invalid chantier ID" });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid chantier ID",
+        });
       }
 
       filter.chantier = chantier;
     }
 
-    let employees = Employee.find(filter)
-      .populate("user", "name email role status")
-      .populate("chantier", "name location status")
-      .sort({ createdAt: -1 });
+    const employees = await populateEmployee(
+      Employee.find(filter).sort({ createdAt: -1 })
+    );
 
-    const results = await employees;
+    const term =
+      typeof search === "string" ? search.trim().toLowerCase() : "";
 
-    const filteredResults = search
-      ? results.filter((employee) => {
+    const filteredEmployees = term
+      ? employees.filter((employee) => {
           const name = employee.user?.name || "";
           const email = employee.user?.email || "";
           const jobTitle = employee.jobTitle || "";
-
-          const term = search.toLowerCase();
 
           return (
             name.toLowerCase().includes(term) ||
@@ -124,43 +204,56 @@ export const getEmployees = async (req, res) => {
             jobTitle.toLowerCase().includes(term)
           );
         })
-      : results;
+      : employees;
 
     return res.status(200).json({
-      count: filteredResults.length,
-      employees: filteredResults
+      success: true,
+      count: filteredEmployees.length,
+      employees: filteredEmployees,
     });
   } catch (error) {
-    console.error("Get employees failed:", error);
-    return res.status(500).json({ message: "Server error" });
+    return handleError(res, error, "Get employees");
   }
 };
 
 export const getEmployeeById = async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid employee ID" });
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee ID",
+      });
     }
 
-    const employee = await Employee.findById(req.params.id)
-      .populate("user", "name email role status")
-      .populate("chantier", "name location status");
+    const employee = await populateEmployee(Employee.findById(id));
 
     if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
     }
 
-    return res.status(200).json({ employee });
+    return res.status(200).json({
+      success: true,
+      employee,
+    });
   } catch (error) {
-    console.error("Get employee failed:", error);
-    return res.status(500).json({ message: "Server error" });
+    return handleError(res, error, "Get employee");
   }
 };
 
 export const updateEmployee = async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid employee ID" });
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee ID",
+      });
     }
 
     const allowedFields = [
@@ -169,93 +262,161 @@ export const updateEmployee = async (req, res) => {
       "salary",
       "hireDate",
       "chantier",
-      "status"
+      "status",
     ];
 
+    const body = req.body || {};
     const updates = {};
 
     for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
+      if (body[field] !== undefined) {
+        updates[field] = body[field];
       }
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: "No valid fields to update" });
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields to update",
+      });
+    }
+
+    if (updates.jobTitle !== undefined) {
+      if (
+        typeof updates.jobTitle !== "string" ||
+        !updates.jobTitle.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Job title must be a non-empty string",
+        });
+      }
+
+      updates.jobTitle = updates.jobTitle.trim();
+    }
+
+    if (updates.phone !== undefined && updates.phone !== null) {
+      if (typeof updates.phone !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Phone must be a string",
+        });
+      }
+
+      updates.phone = updates.phone.trim();
+    }
+
+    if (updates.salary !== undefined) {
+      const parsedSalary = parseSalary(updates.salary);
+
+      if (parsedSalary === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Salary must be a valid non-negative number",
+        });
+      }
+
+      updates.salary = parsedSalary;
+    }
+
+    if (updates.hireDate !== undefined) {
+      if (!isValidDate(updates.hireDate)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid hire date",
+        });
+      }
+
+      updates.hireDate = new Date(updates.hireDate);
     }
 
     if (
-      updates.salary !== undefined &&
-      (!Number.isFinite(updates.salary) || updates.salary < 0)
+      updates.status !== undefined &&
+      !EMPLOYEE_STATUSES.includes(updates.status)
     ) {
-      return res.status(400).json({ message: "Invalid salary" });
-    }
-
-    if (
-      updates.hireDate !== undefined &&
-      Number.isNaN(Date.parse(updates.hireDate))
-    ) {
-      return res.status(400).json({ message: "Invalid hire date" });
-    }
-
-    if (updates.status !== undefined &&
-        !["active", "inactive", "on_leave"].includes(updates.status)) {
-      return res.status(400).json({ message: "Invalid employee status" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee status",
+      });
     }
 
     if (updates.chantier) {
       if (!mongoose.isValidObjectId(updates.chantier)) {
-        return res.status(400).json({ message: "Invalid chantier ID" });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid chantier ID",
+        });
       }
 
-      const existingChantier = await Chantier.findById(updates.chantier);
+      const existingChantier = await Chantier.findById(
+        updates.chantier
+      );
 
       if (!existingChantier) {
-        return res.status(404).json({ message: "Chantier not found" });
+        return res.status(404).json({
+          success: false,
+          message: "Chantier not found",
+        });
       }
-    } else if (updates.chantier === "") {
+    } else if (
+      updates.chantier === "" ||
+      updates.chantier === null
+    ) {
       updates.chantier = null;
     }
 
-    const employee = await Employee.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true }
-    )
-      .populate("user", "name email role status")
-      .populate("chantier", "name location status");
+    const employee = await Employee.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
     }
 
+    await employee.populate([
+      { path: "user", select: "name email role status" },
+      { path: "chantier", select: "name location status" },
+    ]);
+
     return res.status(200).json({
+      success: true,
       message: "Employee updated successfully",
-      employee
+      employee,
     });
   } catch (error) {
-    console.error("Update employee failed:", error);
-    return res.status(500).json({ message: "Server error" });
+    return handleError(res, error, "Update employee");
   }
 };
 
 export const deleteEmployee = async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid employee ID" });
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee ID",
+      });
     }
 
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employee = await Employee.findByIdAndDelete(id);
 
     if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
     }
 
     return res.status(200).json({
-      message: "Employee deleted successfully"
+      success: true,
+      message: "Employee deleted successfully",
     });
   } catch (error) {
-    console.error("Delete employee failed:", error);
-    return res.status(500).json({ message: "Server error" });
+    return handleError(res, error, "Delete employee");
   }
 };
