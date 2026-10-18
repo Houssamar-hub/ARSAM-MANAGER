@@ -10,6 +10,17 @@ export const authorize = (...roles) => {
       });
     }
 
+    if (
+      roles.length === 0 ||
+      roles.some((role) => !ALLOWED_ROLES.includes(role))
+    ) {
+      console.error("Invalid role configuration in route");
+
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+    }
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
