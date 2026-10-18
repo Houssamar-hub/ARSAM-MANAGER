@@ -1,38 +1,45 @@
+
 import mongoose from "mongoose";
+
 const userSchema = new mongoose.Schema(
   {
-    name: { 
-        type: String,
-        required: true, 
-        trim: true
-        },
-    email: { 
-        type: String, 
-        required: true,
-        unique: true,
-        trim: true,
-        lowercase: true
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+      trim: true,
+      minlength: [2, "Name must contain at least 2 characters"],
+      maxlength: [100, "Name cannot exceed 100 characters"],
     },
-    password: { 
-        type: String,
-        required: true,
-        select: false,
-        trim: true
+
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      maxlength: [254, "Email is too long"],
     },
+
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+      select: false,
+      minlength: [8, "Password must contain at least 8 characters"],
+    },
+
     role: {
-        type: String,
-        enum: ['admin', 'manager', 'employee'],
-        default: 'employee'
+      type: String,
+      enum: ["admin", "manager", "employee"],
+      default: "employee",
+      required: true,
     },
-    status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'active'
-    }
-  },
-  {
-    timestamps: true
+
+ 
+  
+    timestamps: true,
   }
 );
+
 const User = mongoose.model("User", userSchema);
+
 export default User;
