@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide Complet : Filtrage et Recherche — ARSAM MANAGER</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --primary: #1d4ed8;
+      --primary-dark: #1e3a8a;
+      --primary-light: #eff6ff;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --emerald-600: #059669;
+      --emerald-50: #ecfdf5;
+      --amber-600: #d97706;
+      --amber-50: #fffbeb;
+      --rose-600: #e11d48;
+      --rose-50: #fff1f2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--slate-50);
+      color: var(--slate-900);
+      line-height: 1.6;
+      padding: 2.5rem 1.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 3.5rem 3rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      border: 1px solid var(--slate-200);
+    }
+
+    /* Print Button Bar */
+    .print-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      padding: 1rem 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .btn-print {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s ease;
+    }
+
+    .btn-print:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 2px solid var(--slate-100);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.025em;
+    }
+
+    .brand-sub {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+      margin-top: 0.25rem;
+    }
+
+    .doc-badge {
+      background: var(--slate-100);
+      color: var(--slate-700);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--slate-200);
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin-bottom: 1rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin: 2.25rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--slate-200);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--slate-800);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    p {
+      color: var(--slate-600);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    /* Flow diagram */
+    .flow-box {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--slate-800);
+      line-height: 1.7;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0 2rem;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: var(--slate-50);
+      color: var(--slate-700);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--slate-200);
+      text-align: left;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin: 1rem 0 1.5rem;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--slate-100);
+      color: var(--primary);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.35rem;
+      font-size: 0.825rem;
+      font-weight: 500;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Callout */
+    .callout {
+      padding: 1rem 1.25rem;
+      border-radius: 0.75rem;
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+      color: var(--primary-dark);
+    }
+
+    .callout-success {
+      border-left-color: var(--emerald-600);
+      background: var(--emerald-50);
+      color: #065f46;
+    }
+
+    .callout-warning {
+      border-left-color: var(--amber-600);
+      background: var(--amber-50);
+      color: #92400e;
+    }
+
+    /* Footer */
+    .doc-footer {
+      border-top: 1px solid var(--slate-200);
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      color: var(--slate-500);
+      font-size: 0.8rem;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      pre {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        page-break-inside: avoid;
+      }
+
+      table {
+        page-break-inside: avoid;
+      }
+
+      h2, h3 {
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Quick Print Button for User -->
+    <div class="print-actions">
+      <div>
+        <strong style="color: var(--primary-dark);">📄 Version Imprimable / Export PDF</strong>
+        <p style="margin: 0; font-size: 0.8rem; color: var(--slate-600);">Cliquez sur le bouton pour enregistrer directement ce document au format PDF.</p>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"></path></svg>
+        Imprimer / Sauvegarder en PDF
+      </button>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="brand-title">ARSAM TRAVAUX</div>
+        <div class="brand-sub">SARL • Construction & BTP</div>
+      </div>
+      <div class="doc-badge">Guide Technique • Architecture de Filtrage</div>
+    </div>
+
+    <h1>Système de Filtrage & Recherche Avancée</h1>
+    <p>Ce document est un manuel complet expliquant le fonctionnement du filtrage dans l'architecture <strong>Node.js, Express, MongoDB et React</strong> de la plateforme ARSAM MANAGER. Il dresse l'inventaire complet de tous les filtres disponibles, de leurs requêtes, et détaille le code prêt à l'emploi.</p>
+
+    <!-- Section 1 -->
+    <h2>1. Schéma du flux de filtrage (Full-Stack Data Flow)</h2>
+    <div class="flow-box">
+1. UTILISATEUR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;➔ Saisie mot-clé ou sélection d'une option dans l'interface React<br>
+2. REACT STATE &nbsp;&nbsp;&nbsp;&nbsp;➔ Stockage dans des variables d'état (useState) avec Débouncing (300ms)<br>
+3. URL SEARCH &nbsp;&nbsp;&nbsp;&nbsp;➔ Génération d'une Query String via URLSearchParams (ex: ?status=in_progress&search=villa)<br>
+4. API BACKEND &nbsp;&nbsp;&nbsp;&nbsp;➔ Express intercepte les paramètres via req.query<br>
+5. MONGOOSE QUERY ➔ Construction dynamique de l'objet filter = {} avec opérateurs ($regex, $gte, $lte, $expr)<br>
+6. BASE MONGODB &nbsp;&nbsp;➔ Exécution optimisée avec tri et renvoi uniquement des lignes correspondantes
+    </div>
+
+    <!-- Section 2 -->
+    <h2>2. Inventaire complet de tous les filtres par module</h2>
+
+    <h3>A. Module Chantiers</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Filtre</th>
+          <th>Type</th>
+          <th>Paramètre HTTP</th>
+          <th>Opérateur MongoDB</th>
+          <th>Rôle & Objectif</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Recherche textuelle</strong></td>
+          <td><code>String</code></td>
+          <td><code>search=nom_ou_ville</code></td>
+          <td><code>$regex</code>, <code>$options: "i"</code></td>
+          <td>Filtre simultanément sur le nom du projet et son emplacement géographique.</td>
+        </tr>
+        <tr>
+          <td><strong>Statut d'exécution</strong></td>
+          <td><code>Enum</code></td>
+          <td><code>status=in_progress</code></td>
+          <td><code>filter.status = status</code></td>
+          <td>Isole les projets : <code>planned</code>, <code>in_progress</code>, <code>completed</code>, <code>suspended</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Conducteur de travaux</strong></td>
+          <td><code>ObjectId</code></td>
+          <td><code>manager=67123...</code></td>
+          <td><code>filter.manager = id</code></td>
+          <td>Affiche uniquement les chantiers affectés à un chef de projet précis.</td>
+        </tr>
+        <tr>
+          <td><strong>Fourchette de Budget</strong></td>
+          <td><code>Number</code></td>
+          <td><code>minBudget=...&maxBudget=...</code></td>
+          <td><code>$gte</code> / <code>$lte</code></td>
+          <td>Filtre les projets par tranches financières (ex: projets &gt; 1 000 000 MAD).</td>
+        </tr>
+        <tr>
+          <td><strong>Dates de chantier</strong></td>
+          <td><code>Date</code></td>
+          <td><code>startDateFrom=...&endDateTo=...</code></td>
+          <td><code>$gte</code> / <code>$lte</code></td>
+          <td>Permet de filtrer le calendrier d'exécution et les échéances de livraison.</td>
+        </tr>
+        <tr>
+          <td><strong>Tri dynamique</strong></td>
+          <td><code>String</code></td>
+          <td><code>sortBy=budget&order=desc</code></td>
+          <td><code>.sort({ [sortBy]: -1 })</code></td>
+          <td>Classement par budget croissant/décroissant, date de début ou date de création.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>B. Module Matériaux & Stock</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Filtre</th>
+          <th>Type</th>
+          <th>Paramètre HTTP</th>
+          <th>Opérateur MongoDB</th>
+          <th>Rôle & Objectif</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Recherche textuelle</strong></td>
+          <td><code>String</code></td>
+          <td><code>search=ciment</code></td>
+          <td><code>$regex</code>, <code>$options: "i"</code></td>
+          <td>Recherche instantanée sur la désignation ou la référence unique (ex: <code>CIM-001</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Catégorie BTP</strong></td>
+          <td><code>Enum</code></td>
+          <td><code>category=iron</code></td>
+          <td><code>filter.category = cat</code></td>
+          <td>Filtre par corps de métier (Ciment, Fer, Sable, Bois, Peinture, Électricité, etc.).</td>
+        </tr>
+        <tr>
+          <td><strong>Chantier affecté</strong></td>
+          <td><code>ObjectId</code></td>
+          <td><code>chantier=67123...</code></td>
+          <td><code>filter.chantier = id</code></td>
+          <td>Matériaux alloués à un chantier donné ou stock général de l'entreprise.</td>
+        </tr>
+        <tr>
+          <td><strong>Stock Faible / Alerte</strong></td>
+          <td><code>Boolean</code></td>
+          <td><code>lowStock=true</code></td>
+          <td><code>$expr: { $lte: ["$quantity", "$minStock"] }</code></td>
+          <td>Isole tous les articles dont la quantité est critique pour réapprovisionnement.</td>
+        </tr>
+        <tr>
+          <td><strong>Rupture de Stock</strong></td>
+          <td><code>Boolean</code></td>
+          <td><code>outOfStock=true</code></td>
+          <td><code>quantity: 0</code></td>
+          <td>Affiche uniquement les articles totalement épuisés en réserve.</td>
+        </tr>
+        <tr>
+          <td><strong>Emplacement de dépôt</strong></td>
+          <td><code>String</code></td>
+          <td><code>storageLocation=HangarB</code></td>
+          <td><code>$regex</code></td>
+          <td>Filtre selon le lieu d'entreposage (Dépôt central, Zone A, Magasin, etc.).</td>
+        </tr>
+        <tr>
+          <td><strong>Unité de conditionnement</strong></td>
+          <td><code>Enum</code></td>
+          <td><code>unit=ton</code></td>
+          <td><code>filter.unit = unit</code></td>
+          <td>Filtre par unité (tonne, sac, kg, m³, mètre linéaire, pièce).</td>
+        </tr>
+        <tr>
+          <td><strong>Tranche de Prix Unitaire</strong></td>
+          <td><code>Number</code></td>
+          <td><code>minPrice=...&maxPrice=...</code></td>
+          <td><code>$gte</code> / <code>$lte</code></td>
+          <td>Filtrage sur les coûts d'achat unitaire des consommables.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Section 3 -->
+    <h2>3. Implémentation Backend (Contrôleur Express & Mongoose)</h2>
+    <p>Voici le modèle complet pour concevoir n'importe quel contrôleur de filtrage dans votre backend Node.js :</p>
+
+    <pre><code>// server/controllers/chantierController.js
+export const getChantiers = async (req, res) => {
+  try {
+    const {
+      search,
+      status,
+      manager,
+      minBudget,
+      maxBudget,
+      startDateFrom,
+      startDateTo,
+      sortBy = "createdAt",
+      order = "desc"
+    } = req.query;
+
+    const filter = {};
+
+    // 1. Filtre égalité exacte (Statut)
+    if (status) {
+      filter.status = status;
+    }
+
+    // 2. Filtre par conducteur de travaux (ObjectId)
+    if (manager && mongoose.isValidObjectId(manager)) {
+      filter.manager = manager;
+    }
+
+    // 3. Fourchette numérique (Budget)
+    if (minBudget !== undefined || maxBudget !== undefined) {
+      filter.budget = {};
+      if (minBudget) filter.budget.$gte = Number(minBudget);
+      if (maxBudget) filter.budget.$lte = Number(maxBudget);
+    }
+
+    // 4. Fourchette de dates (Calendrier)
+    if (startDateFrom || startDateTo) {
+      filter.startDate = {};
+      if (startDateFrom) filter.startDate.$gte = new Date(startDateFrom);
+      if (startDateTo) filter.startDate.$lte = new Date(startDateTo);
+    }
+
+    // 5. Recherche multicritère insensible à la casse
+    if (search && search.trim()) {
+      const safe = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.$or = [
+        { name: { $regex: safe, $options: "i" } },
+        { location: { $regex: safe, $options: "i" } }
+      ];
+    }
+
+    // 6. Tri et exécution optimisée
+    const sort = { [sortBy]: order === "asc" ? 1 : -1 };
+
+    const chantiers = await Chantier.find(filter)
+      .populate("manager", "name email role")
+      .populate("createdBy", "name email")
+      .sort(sort);
+
+    return res.status(200).json({
+      success: true,
+      count: chantiers.length,
+      chantiers
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};</code></pre>
+
+    <!-- Section 4 -->
+    <h2>4. Implémentation Frontend (React & Débouncing)</h2>
+    <p>Pour garantir des performances fluides sans requêtes répétitives à chaque frappe de touche, on utilise un <strong>débounce de 300 ms</strong> :</p>
+
+    <pre><code>// Exemple d'intégration dans un composant React
+import { useState, useEffect, useCallback } from "react";
+import chantiersApi from "../../api/chantiers.js";
+
+export const ChantiersList = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [managerFilter, setManagerFilter] = useState("");
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        search: searchTerm,
+        status: statusFilter,
+        manager: managerFilter,
+      };
+
+      const res = await chantiersApi.getAll(params);
+      if (res?.success) setData(res.chantiers);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, statusFilter, managerFilter]);
+
+  // Déclencheur avec temporisation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
+
+  return (
+    &lt;div&gt;
+      {/* Barre de recherche */}
+      &lt;input
+        type="text"
+        placeholder="Rechercher..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      /&gt;
+      {/* Sélecteur de statut */}
+      &lt;select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}&gt;
+        &lt;option value=""&gt;Tous les statuts&lt;/option&gt;
+        &lt;option value="in_progress"&gt;En cours&lt;/option&gt;
+        &lt;option value="planned"&gt;Planifié&lt;/option&gt;
+        &lt;option value="completed"&gt;Terminé&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/div&gt;
+  );
+};</code></pre>
+
+    <!-- Section 5 -->
+    <h2>5. Filtrage Côté Serveur vs Filtrage Côté Client</h2>
+    <div class="callout callout-success">
+      <strong>Règle d'or de l'architecture ARSAM :</strong> Privilégiez toujours le <strong>filtrage côté serveur</strong> (via MongoDB et `req.query`). Cela évite de transférer inutilement des milliers de lignes sur le réseau mobile de vos équipes sur chantier. Le filtrage côté client (`array.filter()`) ne doit être réservé qu'à des listes statiques de moins de 100 enregistrements déjà chargées en mémoire.
+    </div>
+
+    <!-- Footer -->
+    <div class="doc-footer">
+      <span>© 2026 ARSAM TRAVAUX SARL — Tous droits réservés</span>
+      <span>Plateforme ARSAM MANAGER • BTP & Génie Civil</span>
+    </div>
+  </div>
+
+</body>
+</html>

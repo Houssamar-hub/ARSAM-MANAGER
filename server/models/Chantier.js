@@ -52,6 +52,7 @@ const chantierSchema = new mongoose.Schema(
       enum: ["planned", "in_progress", "completed", "suspended"],
       default: "planned",
       required: true,
+      index: true,
     },
 
     manager: {

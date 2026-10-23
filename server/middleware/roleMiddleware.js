@@ -11,10 +11,11 @@ export const authorize = (...roles) => {
     }
 
     if (
+      !ALLOWED_ROLES.includes(req.user.role) ||
       roles.length === 0 ||
       roles.some((role) => !ALLOWED_ROLES.includes(role))
     ) {
-      console.error("Invalid role configuration in route");
+      console.error("Invalid role or role configuration in route");
 
       return res.status(500).json({
         success: false,

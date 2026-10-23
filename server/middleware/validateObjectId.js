@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 export const validateObjectId = (paramName = "id") => {
@@ -11,6 +12,6 @@ export const validateObjectId = (paramName = "id") => {
       });
     }
 
-    next();
+    return next();
   };
 };

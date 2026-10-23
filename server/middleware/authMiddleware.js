@@ -1,5 +1,6 @@
 
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 export const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -40,7 +41,7 @@ export const protect = (req, res, next) => {
       !decoded ||
       typeof decoded !== "object" ||
       typeof decoded.id !== "string" ||
-      !decoded.id ||
+      !mongoose.isValidObjectId(decoded.id) ||
       typeof decoded.role !== "string"
     ) {
       return res.status(401).json({

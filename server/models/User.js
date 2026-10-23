@@ -17,7 +17,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      maxlength: [254, "Email is too long"],
+      maxlength: [254, "Email cannot exceed 254 characters"],
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        "Please provide a valid email address",
+      ],
     },
 
     password: {

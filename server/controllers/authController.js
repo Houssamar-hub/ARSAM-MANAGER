@@ -18,6 +18,7 @@ const isValidEmail = (email) =>
 
 const getJwtSecret = () => process.env.JWT_SECRET;
 
+// Register user
 export const register = async (req, res) => {
   const { name, email, password } = req.body || {};
 
@@ -98,6 +99,7 @@ export const register = async (req, res) => {
   }
 };
 
+// Login user
 export const login = async (req, res) => {
   const { email, password } = req.body || {};
 
@@ -179,11 +181,10 @@ export const login = async (req, res) => {
   }
 };
 
+// Get current user
 export const getme = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select(
-      "-password"
-    );
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -204,11 +205,33 @@ export const getme = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get user failed:", error.message);
+    console.error("Get current user failed:", error.message);
 
     return res.status(500).json({
       success: false,
       message: "Server error",
+    });
+  }
+};
+
+// Get all managers and admins (for dropdowns)
+export const getManagers = async (req, res) => {
+  try {
+    const managers = await User.find(
+      { status: 'active', role: { $in: ['admin', 'manager'] } },
+      'name email role'
+    ).sort({ name: 1 });
+
+    return res.status(200).json({
+      success: true,
+      managers,
+    });
+  } catch (error) {
+    console.error('Get managers failed:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
     });
   }
 };

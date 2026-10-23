@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 import Chantier from "../models/Chantier.js";
 import User from "../models/User.js";
+import Material from "../models/Material.js";
 
 const validStatuses = [
   "planned",
@@ -11,26 +12,41 @@ const validStatuses = [
 ];
 
 const isValidDate = (value) => {
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime());
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return false;
+  }
+
+  return !Number.isNaN(new Date(value).getTime());
 };
 
 const escapeRegex = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const validateManager = async (managerId) => {
-  if (!mongoose.isValidObjectId(managerId)) {
+  if (
+    typeof managerId !== "string" ||
+    !mongoose.isValidObjectId(managerId)
+  ) {
     return false;
   }
 
   const manager = await User.findOne({
     _id: managerId,
-    role: "manager",
+    role: { $in: ["admin", "manager"] },
     status: "active",
   }).select("_id");
 
   return Boolean(manager);
 };
+
+const populateChantier = (query) =>
+  query
+    .populate("manager", "name email role")
+    .populate("createdBy", "name email");
 
 // Create chantier
 export const createChantier = async (req, res) => {
@@ -58,19 +74,28 @@ export const createChantier = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, location, budget, start date and end date",
+        message:
+          "Please provide name, location, budget, start date and end date",
       });
     }
 
     if (
-      (description !== undefined &&
-        typeof description !== "string") ||
-      (status !== undefined &&
-        !validStatuses.includes(status))
+      description !== undefined &&
+      typeof description !== "string"
     ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid description or chantier status",
+        message: "Description must be a string",
+      });
+    }
+
+    if (
+      status !== undefined &&
+      !validStatuses.includes(status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid chantier status",
       });
     }
 
@@ -86,7 +111,10 @@ export const createChantier = async (req, res) => {
       });
     }
 
-    if (!isValidDate(startDate) || !isValidDate(endDate)) {
+    if (
+      !isValidDate(startDate) ||
+      !isValidDate(endDate)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Please provide valid chantier dates",
@@ -99,7 +127,8 @@ export const createChantier = async (req, res) => {
     if (end < start) {
       return res.status(400).json({
         success: false,
-        message: "End date must be after or equal to start date",
+        message:
+          "End date must be after or equal to start date",
       });
     }
 
@@ -114,33 +143,30 @@ export const createChantier = async (req, res) => {
       }
 
       managerId = manager;
-    } else if (req.user.role === "manager") {
+    } else if (req.user?.id) {
       managerId = req.user.id;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Please assign an active manager or admin to this chantier",
+      });
     }
 
-    const chantierData = {
+    const chantier = await Chantier.create({
       name: name.trim(),
-      description,
+      description: description?.trim() || "",
       location: location.trim(),
       budget: numericBudget,
       startDate: start,
       endDate: end,
+      status: status || "planned",
+      manager: managerId,
       createdBy: req.user.id,
-    };
+    });
 
-    if (status !== undefined) {
-      chantierData.status = status;
-    }
-
-    if (managerId) {
-      chantierData.manager = managerId;
-    }
-
-    const chantier = await Chantier.create(chantierData);
-
-    const populatedChantier = await Chantier.findById(chantier._id)
-      .populate("manager", "name email role")
-      .populate("createdBy", "name email");
+    const populatedChantier = await populateChantier(
+      Chantier.findById(chantier._id)
+    );
 
     return res.status(201).json({
       success: true,
@@ -148,7 +174,7 @@ export const createChantier = async (req, res) => {
       chantier: populatedChantier,
     });
   } catch (error) {
-    console.error("Create chantier:", error.message);
+    console.error("Create chantier failed:", error.message);
 
     if (
       error.name === "ValidationError" ||
@@ -198,16 +224,25 @@ export const getChantiers = async (req, res) => {
         const safeSearch = escapeRegex(searchTerm);
 
         filter.$or = [
-          { name: { $regex: safeSearch, $options: "i" } },
-          { location: { $regex: safeSearch, $options: "i" } },
+          {
+            name: {
+              $regex: safeSearch,
+              $options: "i",
+            },
+          },
+          {
+            location: {
+              $regex: safeSearch,
+              $options: "i",
+            },
+          },
         ];
       }
     }
 
-    const chantiers = await Chantier.find(filter)
-      .populate("manager", "name email role")
-      .populate("createdBy", "name email")
-      .sort({ createdAt: -1 });
+    const chantiers = await populateChantier(
+      Chantier.find(filter).sort({ createdAt: -1 })
+    );
 
     return res.status(200).json({
       success: true,
@@ -215,7 +250,7 @@ export const getChantiers = async (req, res) => {
       chantiers,
     });
   } catch (error) {
-    console.error("Get chantiers:", error.message);
+    console.error("Get chantiers failed:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -236,9 +271,9 @@ export const getChantierById = async (req, res) => {
       });
     }
 
-    const chantier = await Chantier.findById(id)
-      .populate("manager", "name email role")
-      .populate("createdBy", "name email");
+    const chantier = await populateChantier(
+      Chantier.findById(id)
+    );
 
     if (!chantier) {
       return res.status(404).json({
@@ -252,7 +287,7 @@ export const getChantierById = async (req, res) => {
       chantier,
     });
   } catch (error) {
-    console.error("Get chantier:", error.message);
+    console.error("Get chantier failed:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -301,8 +336,10 @@ export const updateChantier = async (req, res) => {
 
     if (
       updates.name !== undefined &&
-      (typeof updates.name !== "string" ||
-        !updates.name.trim())
+      (
+        typeof updates.name !== "string" ||
+        !updates.name.trim()
+      )
     ) {
       return res.status(400).json({
         success: false,
@@ -312,8 +349,10 @@ export const updateChantier = async (req, res) => {
 
     if (
       updates.location !== undefined &&
-      (typeof updates.location !== "string" ||
-        !updates.location.trim())
+      (
+        typeof updates.location !== "string" ||
+        !updates.location.trim()
+      )
     ) {
       return res.status(400).json({
         success: false,
@@ -377,6 +416,10 @@ export const updateChantier = async (req, res) => {
       updates.location = updates.location.trim();
     }
 
+    if (updates.description !== undefined) {
+      updates.description = updates.description.trim();
+    }
+
     if (updates.manager !== undefined) {
       if (!(await validateManager(updates.manager))) {
         return res.status(400).json({
@@ -395,22 +438,23 @@ export const updateChantier = async (req, res) => {
       });
     }
 
-    const start = updates.startDate ?? chantier.startDate;
-    const end = updates.endDate ?? chantier.endDate;
+    const startDate = updates.startDate ?? chantier.startDate;
+    const endDate = updates.endDate ?? chantier.endDate;
 
-    if (end < start) {
+    if (endDate < startDate) {
       return res.status(400).json({
         success: false,
-        message: "End date must be after or equal to start date",
+        message:
+          "End date must be after or equal to start date",
       });
     }
 
     Object.assign(chantier, updates);
     await chantier.save();
 
-    const updatedChantier = await Chantier.findById(chantier._id)
-      .populate("manager", "name email role")
-      .populate("createdBy", "name email");
+    const updatedChantier = await populateChantier(
+      Chantier.findById(chantier._id)
+    );
 
     return res.status(200).json({
       success: true,
@@ -418,7 +462,7 @@ export const updateChantier = async (req, res) => {
       chantier: updatedChantier,
     });
   } catch (error) {
-    console.error("Update chantier:", error.message);
+    console.error("Update chantier failed:", error.message);
 
     if (
       error.name === "ValidationError" ||
@@ -449,7 +493,7 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
-    const chantier = await Chantier.findByIdAndDelete(id);
+    const chantier = await Chantier.findById(id);
 
     if (!chantier) {
       return res.status(404).json({
@@ -458,12 +502,26 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
+    const linkedMaterial = await Material.exists({
+      chantier: chantier._id,
+    });
+
+    if (linkedMaterial) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Cannot delete this chantier while materials are assigned to it. Reassign or unlink the materials first.",
+      });
+    }
+
+    await chantier.deleteOne();
+
     return res.status(200).json({
       success: true,
       message: "Chantier deleted successfully",
     });
   } catch (error) {
-    console.error("Delete chantier:", error.message);
+    console.error("Delete chantier failed:", error.message);
 
     return res.status(500).json({
       success: false,

@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,8 +15,14 @@ const startServer = async () => {
 
     await connectDB();
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    const server = app.listen(PORT, () => {
+      console.log(`ARSAM MANAGER API running on port ${PORT}`);
+      console.log(`API URL: http://localhost:${PORT}`);
+    });
+
+    server.on("error", (error) => {
+      console.error("Server error:", error.message);
+      process.exit(1);
     });
   } catch (error) {
     console.error("Server startup failed:", error.message);

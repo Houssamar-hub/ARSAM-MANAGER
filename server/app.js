@@ -4,38 +4,36 @@ import cors from "cors";
 
 import authRoutes from "./routes/authRoutes.js";
 import chantierRoutes from "./routes/chantierRoutes.js";
-import employeeRoutes from "./routes/employeeRoutes.js";
-import equipmentRoutes from "./routes/equipmentRoutes.js";
 import materialRoutes from "./routes/materialRoutes.js";
-import stockMovementRoutes from "./routes/stockMovementRoutes.js";
-import expenseRoutes from "./routes/expenseRoutes.js";
-import attendanceRoutes from "./routes/attendanceRoutes.js";
-import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  })
+);
+
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "ARSAM MANAGER API is running",
   });
 });
 
-// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/chantiers", chantierRoutes);
-app.use("/api/employees", employeeRoutes);
-app.use("/api/equipments", equipmentRoutes);
 app.use("/api/materials", materialRoutes);
-app.use("/api/stock-movements", stockMovementRoutes);
-app.use("/api/expenses", expenseRoutes);
-app.use("/api/attendances", attendanceRoutes);
-app.use("/api/dashboard", dashboardRoutes);
 
-// Global Error Handler
+app.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
 app.use((error, req, res, next) => {
   if (res.headersSent) {
     return next(error);
@@ -45,6 +43,13 @@ app.use((error, req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Request body must be valid JSON",
+    });
+  }
+
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      message: "Request body is too large",
     });
   }
 
@@ -72,7 +77,7 @@ app.use((error, req, res, next) => {
     });
   }
 
-  console.error(error);
+  console.error("Unhandled application error:", error);
 
   return res.status(500).json({
     success: false,

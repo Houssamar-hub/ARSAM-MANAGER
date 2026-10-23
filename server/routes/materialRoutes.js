@@ -1,4 +1,3 @@
-
 import express from "express";
 
 import {
@@ -19,16 +18,12 @@ router.use(protect);
 
 router
   .route("/")
-  .get(authorize("admin", "manager"), getMaterials)
+  .get(getMaterials)
   .post(authorize("admin", "manager"), createMaterial);
 
 router
   .route("/:id")
-  .get(
-    authorize("admin", "manager"),
-    validateObjectId("id"),
-    getMaterialById
-  )
+  .get(validateObjectId("id"), getMaterialById)
   .put(
     authorize("admin", "manager"),
     validateObjectId("id"),
