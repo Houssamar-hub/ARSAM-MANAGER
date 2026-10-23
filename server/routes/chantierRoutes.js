@@ -7,6 +7,7 @@ import {
   getChantierById,
   updateChantier,
   deleteChantier,
+  getCompletedChantier,
 } from "../controllers/chantierController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -16,6 +17,8 @@ import { validateObjectId } from "../middleware/validateObjectId.js";
 const router = express.Router();
 
 router.use(protect);
+
+router.get("/completed-chantier", getCompletedChantier)
 
 router
   .route("/")
