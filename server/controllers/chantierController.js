@@ -514,12 +514,7 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
-    await chantier.deleteOne();
 
-    return res.status(200).json({
-      success: true,
-      message: "Chantier deleted successfully",
-    });
 
 };
 
