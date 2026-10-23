@@ -80,7 +80,7 @@ export const Dashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  
+
 
   const [ person, setPerson ] = useState({
     name: "oussama",
@@ -89,9 +89,6 @@ export const Dashboard = () => {
 })
 
 
-  function changeData() {
-      setPerson({...person, name: "houssam", job: "student"})
-  }
 
   // Real statistics calculated strictly from actual backend records
   const stats = useMemo(() => {
