@@ -12,7 +12,7 @@ const run = async () => {
     const email = process.argv[2];
 
     if (!email) {
-      console.log("\n📋 Liste des utilisateurs dans la base de données :");
+      console.log("\n Liste des utilisateurs dans la base de données :");
       const users = await User.find({}, "name email role status createdAt");
       if (users.length === 0) {
         console.log("Aucun utilisateur trouvé.");
@@ -38,7 +38,7 @@ const run = async () => {
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      console.error(`\n❌ Utilisateur avec l'email "${normalizedEmail}" introuvable.\n`);
+      console.error(`\nUtilisateur avec l'email "${normalizedEmail}" introuvable.\n`);
       process.exit(1);
     }
 
@@ -46,7 +46,7 @@ const run = async () => {
     await user.save();
 
     console.log(
-      `\n✅ Succès ! L'utilisateur "${user.name}" (${user.email}) est désormais ADMIN.\n`
+      `\n Succès ! L'utilisateur "${user.name}" (${user.email}) est désormais ADMIN.\n`
     );
     process.exit(0);
   } catch (err) {
