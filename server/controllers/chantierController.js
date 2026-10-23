@@ -520,10 +520,6 @@ export const deleteChantier = async (req, res) => {
       success: true,
       message: "Chantier deleted successfully",
     });
-  } catch (error) {
-    console.error("Delete chantier failed:", error.message);
 
- 
-  }
 };
 
