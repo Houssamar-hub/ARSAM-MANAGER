@@ -82,11 +82,6 @@ export const Dashboard = () => {
 
 
 
-  const [ person, setPerson ] = useState({
-    name: "oussama",
-    age: 24,
-    job: "instructor"
-})
 
 
 
