@@ -529,3 +529,27 @@ export const deleteChantier = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+export const getCompletedChantier = async (req, res) => {
+  try {
+
+    const chantiers = await Chantier.find({status: "completed"})
+
+
+    res.status(200).json({
+      chantiers: chantiers,
+    })
+
+  } catch (error) {
+    console.error("Delete chantier failed:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+}
