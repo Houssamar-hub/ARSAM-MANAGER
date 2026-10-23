@@ -530,7 +530,3 @@ export const deleteChantier = async (req, res) => {
   }
 };
 
-
-
-
-
