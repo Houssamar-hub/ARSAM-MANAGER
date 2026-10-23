@@ -18,7 +18,6 @@ const router = express.Router();
 
 router.use(protect);
 
-router.get("/completed-chantier", getCompletedChantier)
 
 router
   .route("/")
