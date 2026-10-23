@@ -534,15 +534,3 @@ export const deleteChantier = async (req, res) => {
 
 
 
-export const getCompletedChantier = async (req, res) => {
-  try {
-
-    const chantiers = await Chantier.find({status: "completed"})
-
-
-    res.status(200).json({
-      chantiers: chantiers,
-    })
-
-  } 
-  }
