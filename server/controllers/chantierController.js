@@ -502,8 +502,6 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
-    const linkedMaterial = await Material.exists({
-      chantier: chantier._id,
-    });
+
 
 
