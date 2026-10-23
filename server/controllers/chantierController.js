@@ -493,8 +493,6 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
-    const chantier = await Chantier.findById(id);
-
  
 
 
