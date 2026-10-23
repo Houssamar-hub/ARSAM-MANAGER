@@ -507,12 +507,7 @@ export const deleteChantier = async (req, res) => {
     });
 
     if (linkedMaterial) {
-      return res.status(409).json({
-        success: false,
-        message:
-          "Cannot delete this chantier while materials are assigned to it. Reassign or unlink the materials first.",
-      });
-    }
+    
 
 
 
