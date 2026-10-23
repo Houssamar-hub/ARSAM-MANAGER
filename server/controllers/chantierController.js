@@ -493,8 +493,23 @@ export const deleteChantier = async (req, res) => {
       });
     }
 
- 
+    const chantier = await Chantier.findById(id);
+
+    if (!chantier) {
+      return res.status(404).json({
+        success: false,
+        message: "Chantier not found",
+      });
+    }
+
+    const linkedMaterial = await Material.exists({
+      chantier: chantier._id,
+    });
+
+    if (linkedMaterial) {
+    
 
 
 
+};
 
