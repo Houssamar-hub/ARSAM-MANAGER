@@ -506,10 +506,4 @@ export const deleteChantier = async (req, res) => {
       chantier: chantier._id,
     });
 
-    if (linkedMaterial) {
-    
-
-
-
-};
 
