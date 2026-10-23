@@ -80,6 +80,18 @@ export const Dashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+
+  const [ person, setPerson ] = useState({
+    name: "oussama",
+    age: 24,
+    job: "instructor"
+})
+
+
+  function changeData() {
+      setPerson({...person, name: "houssam", job: "student"})
+  }
+
   // Real statistics calculated strictly from actual backend records
   const stats = useMemo(() => {
     const totalChantiersCount = chantiers.length;
