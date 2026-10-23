@@ -544,12 +544,5 @@ export const getCompletedChantier = async (req, res) => {
       chantiers: chantiers,
     })
 
-  } catch (error) {
-    console.error("Delete chantier failed:", error.message);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+  } 
   }
-}
